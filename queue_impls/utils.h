@@ -1,6 +1,7 @@
 #pragma once
 #include <atomic>
 #include <mutex>
+#include <queue>
 #include <stdexcept>
 #include <unistd.h>
 
@@ -27,6 +28,22 @@ namespace Utils
 		{}
 		
 		virtual ~queue_stopped_exception() {};
+	};
+	
+	/* `std::queue` with iterators. */
+	template<typename ...Args>
+	class Queue : public std::queue<Args...>
+	{
+	private:
+		using Self = std::queue<Args...>;
+	public:
+		using Self::Self; // export constructors
+		
+		[[nodiscard]] constexpr auto begin() { return this->c.begin(); }
+		[[nodiscard]] constexpr auto end() { return this->c.end(); }
+		
+		[[nodiscard]] constexpr auto begin() const { return this->c.begin(); }
+		[[nodiscard]] constexpr auto end() const { return this->c.end(); }
 	};
 	
 	
