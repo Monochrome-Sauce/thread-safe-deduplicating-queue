@@ -15,6 +15,7 @@ private:
 public:
 	struct KVPair : public std::pair<Key, Value>
 	{
+		using std::pair<Key, Value>::pair;
 		[[nodiscard]] constexpr Key& key() noexcept { return this->first; }
 		[[nodiscard]] constexpr Value& value() noexcept { return this->first; }
 		[[nodiscard]] constexpr const Key& key() const noexcept { return this->first; }
