@@ -1,4 +1,5 @@
 #include "queue_impls/Queue_1Lock.h"
+#include "queue_impls/Queue_2Lock.h"
 
 
 #define check_true(_expr) do { \
@@ -53,7 +54,15 @@ static void test() {
 	}
 }
 
+
+#define run_test(...) do { \
+	printf(">>> Running test with type: " STRINGIFY(__VA_ARGS__) "\n"); \
+	test<__VA_ARGS__>(); \
+	printf(">>> Test run is over.\n\n"); \
+} while (0)
+
 int main() {
-	test<Queue_1Lock<Key, Value>>();
+	run_test(Queue_1Lock<Key, Value>);
+	run_test(Queue_2Lock<Key, Value>);
 	return 0;
 }

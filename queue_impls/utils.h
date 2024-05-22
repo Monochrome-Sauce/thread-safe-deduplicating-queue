@@ -9,7 +9,7 @@
 
 #define CONCAT__(a, b) a##b
 #define CONCAT(a, b) CONCAT__(a, b)
-#define STRINGIFY(x) #x
+#define STRINGIFY(...) #__VA_ARGS__
 
 #define DECL_LOCK_GUARD(_mutex) std::lock_guard<std::mutex> CONCAT(guard, __LINE__){ (_mutex) }
 
