@@ -12,12 +12,12 @@ class Queue_1Lock : public BaseQueue<Key, Value>
 private:
 	using BaseQ = BaseQueue<Key, Value>;
 	
+	Utils::Queue<Key> m_queue;
 	std::map<Key, Value> m_map;
 	std::mutex m_lock;
-	Utils::Queue<Key> m_queue;
 public:
-	using typename BaseQ::usize;
 	using typename BaseQ::KVPair;
+	using typename BaseQ::usize;
 	
 	
 	Queue_1Lock(const usize capacity)
@@ -48,7 +48,7 @@ public:
 	constexpr KVPair read() {
 		while (true) {
 			if (DECL_LOCK_GUARD(m_lock); !m_queue.empty()) {
-				Key key = std::move(m_queue.back());
+				Key key = std::move(m_queue.front());
 				m_queue.pop();
 				
 				auto iter = m_map.find(key);
