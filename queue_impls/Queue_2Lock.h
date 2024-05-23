@@ -1,6 +1,7 @@
 #pragma once
 #include "BaseQueue.h"
 #include <map>
+#include <optional>
 
 
 /* 2 global locks.
@@ -18,6 +19,15 @@ private:
 	Utils::Queue<Key> m_queue;
 	std::map<Key, Value> m_map;
 	std::mutex m_queueLock, m_mapLock;
+	
+	[[nodiscard]] std::optional<Key> _locked_queue_pop() {
+		DECL_LOCK_GUARD(m_queueLock);
+		if (m_queue.empty()) { return std::nullopt; }
+		
+		Key key = std::move(m_queue.front());
+		m_queue.pop();
+		return std::move(key);
+	}
 public:
 	using typename BaseQ::KVPair;
 	using typename BaseQ::usize;
@@ -33,40 +43,36 @@ public:
 	}
 	
 	[[nodiscard]] bool try_write(const Key &key, const Value &value) {
-		DECL_LOCK_GUARD(m_mapLock);
-		auto iter = m_map.find(key);
-		if (iter != m_map.end()) { // dedup
-			iter->second = value;
-			return true;
+		{ DECL_LOCK_GUARD(m_mapLock);
+			auto iter = m_map.find(key);
+			if (iter != m_map.end()) { // dedup
+				iter->second = value;
+				return true;
+			}
+			
+			if (m_map.size() >= this->capacity()) {
+				return false;
+			}
+			m_map[key] = value;
 		}
-		
-		if (m_map.size() >= this->capacity()) {
-			return false;
+		{ DECL_LOCK_GUARD(m_queueLock);
+			m_queue.push(key);
 		}
-		m_map[key] = value;
-		
-		m_mapLock.unlock();
-		DECL_LOCK_GUARD(m_queueLock);
-		
-		m_queue.push(key);
 		return true;
 	}
 	
 	KVPair read() {
 		while (true) {
-			if (DECL_LOCK_GUARD(m_queueLock); !m_queue.empty()) {
-				Key key = std::move(m_queue.front());
-				m_queue.pop();
-				
-				m_queueLock.unlock();
+			std::optional<Key> key = _locked_queue_pop();
+			if (key.has_value()) {
 				DECL_LOCK_GUARD(m_mapLock);
 				
-				auto iter = m_map.find(key);
+				auto iter = m_map.find(key.value());
 				assert(iter != m_map.end());
 				Value val = std::move(iter->second);
 				m_map.erase(iter);
 				
-				return KVPair{ std::move(key), std::move(val) };
+				return KVPair{ std::move(*key), std::move(val) };
 			}
 			
 			if (this->stopped()) {
