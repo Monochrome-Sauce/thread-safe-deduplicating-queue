@@ -25,6 +25,9 @@ public:
 	using usize = decltype(m_capacity);
 	using isize = std::make_signed_t<usize>;
 	
+	using key_type = Key;
+	using value_type = Value;
+	
 	
 	BaseQueue(const usize capacity)
 		: m_capacity{ capacity }, m_stop{ false }

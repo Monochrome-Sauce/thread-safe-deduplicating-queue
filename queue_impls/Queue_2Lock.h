@@ -42,7 +42,7 @@ public:
 		return m_queue.size();
 	}
 	
-	[[nodiscard]] bool try_write(const Key &key, const Value &value) {
+	bool try_write(const Key &key, const Value &value) {
 		{ DECL_LOCK_GUARD(m_mapLock);
 			auto iter = m_map.find(key);
 			if (iter != m_map.end()) { // dedup
