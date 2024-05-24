@@ -95,15 +95,9 @@ static void blackbox_benchmark() {
 	for (std::thread &thrd : writers) {
 		thrd = std::thread([&queue]() {
 			DataSource<DataSet::RANDOM> src;
-			try {
-				for (size_t i = 0; i < N_CYCLES; ++i) {
-					auto [id, number] = src.get();
-					bool res = queue.try_write(Key{ id }, Value{ number });
-					static_cast<void>(res);
-				}
-			}
-			catch (const Utils::queue_stopped_exception&) {
-				printf("Writer forced to stop\n");
+			for (size_t i = 0; i < N_CYCLES; ++i) {
+				auto [id, number] = src.get();
+				static_cast<void>(queue.try_write(Key{ id }, Value{ number }));
 			}
 		});
 	}
