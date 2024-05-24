@@ -2,6 +2,9 @@
 #include "utils.h"
 
 
+using isize = int32_t;
+using usize = std::make_unsigned_t<isize>;
+
 /* Base type that implements common functionality */
 template<typename Key, typename Value>
 class BaseQueue
@@ -21,9 +24,6 @@ public:
 		[[nodiscard]] constexpr const Key& key() const noexcept { return this->first; }
 		[[nodiscard]] constexpr const Value& value() const noexcept { return this->first; }
 	};
-	
-	using usize = decltype(m_capacity);
-	using isize = std::make_signed_t<usize>;
 	
 	using key_type = Key;
 	using value_type = Value;

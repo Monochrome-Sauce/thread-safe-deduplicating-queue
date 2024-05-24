@@ -30,7 +30,6 @@ private:
 	}
 public:
 	using typename BaseQ::KVPair;
-	using typename BaseQ::usize;
 	
 	
 	Queue_2Lock(const usize capacity)

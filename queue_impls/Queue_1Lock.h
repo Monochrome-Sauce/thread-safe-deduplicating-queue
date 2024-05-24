@@ -17,7 +17,6 @@ private:
 	std::mutex m_lock;
 public:
 	using typename BaseQ::KVPair;
-	using typename BaseQ::usize;
 	
 	
 	Queue_1Lock(const usize capacity)
