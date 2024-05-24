@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <atomic>
 #include <cassert>
 #include <mutex>
@@ -12,6 +13,7 @@
 #define STRINGIFY(...) #__VA_ARGS__
 
 #define DECL_LOCK_GUARD(_mutex) std::lock_guard<std::mutex> CONCAT(guard, __LINE__){ (_mutex) }
+
 
 namespace chrono = std::chrono;
 namespace fs = std::filesystem;
@@ -52,5 +54,17 @@ namespace Utils
 	
 	inline void sleep(chrono::milliseconds time) {
 		usleep(chrono::duration_cast<chrono::microseconds>(time).count());
+	}
+	
+	template<typename T, std::size_t N, typename F, std::size_t... I>
+	[[nodiscard]] constexpr
+	auto make_array__impl(F &&func, std::index_sequence<I...>) {
+		return std::array<T, N>{ {func(I)...} };
+	}
+	
+	template<typename T, size_t N, typename F>
+	[[nodiscard]] constexpr
+	std::array<T, N> make_array(F &&func) {
+		return make_array__impl<T>(std::forward<F>(func), std::make_index_sequence<N>{});
 	}
 }
