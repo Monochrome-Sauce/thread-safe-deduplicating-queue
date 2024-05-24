@@ -1,5 +1,6 @@
 #include "DataSource.h"
 #include "queue_impls/Queue_1Lock.h"
+#include "queue_impls/Queue_1LockSharded.h"
 #include "queue_impls/Queue_2Lock.h"
 
 
@@ -54,6 +55,7 @@ static void test() {
 	
 	check_true(queue.size() == 0);
 	check_true(queue.try_write(Key{ "1" }, Value{ 968137 }));
+	check_true(queue.try_write(Key{ "1" }, Value{ -41123 }));
 	check_true(queue.size() == 1);
 	check_true(queue.try_write(Key{ "2" }, Value{ 34905 }));
 	check_true(queue.size() == 2);
@@ -144,8 +146,10 @@ static void blackbox_benchmark() {
 int main() {
 	setlocale(LC_NUMERIC, ""); // to add commas in printf
 	RUN_TEST(Queue_1Lock<Key, Value>);
+	RUN_TEST(Queue_1LockSharded<Key, Value, 16>);
 	RUN_TEST(Queue_2Lock<Key, Value>);
 	RUN_BLACKBOX_BENCHMARK(Queue_1Lock<Key, Value>);
+	RUN_BLACKBOX_BENCHMARK(Queue_1LockSharded<Key, Value, 16>);
 	RUN_BLACKBOX_BENCHMARK(Queue_2Lock<Key, Value>);
 	return 0;
 }
