@@ -2,21 +2,25 @@
 #include <cassert>
 #include <random>
 #include <thread>
+#include <typeinfo>
 
 
 enum class DataSet {
-	LINEAR,
-	RANDOM,
-	ZEROES,
+	LINEAR_8BIT, // frequent duplication
+	LINEAR_16BIT, // infrequent duplication
+	RANDOM, // nearly no duplication
+	ZEROES, // constant duplication
 };
 
 template<DataSet DATA_SET>
 class DataSource
 {
 private:
-	const std::thread::id m_threadId;
+	using Counter = std::conditional_t<DATA_SET == DataSet::LINEAR_8BIT, uint8_t, uint16_t>;
+	
+	const uint64_t m_threadId;
 	std::mt19937 m_rngGen;
-	uint8_t m_linearCounter;
+	Counter m_linearCounter;
 	
 	struct Data {
 		uint64_t id = {};
@@ -26,9 +30,9 @@ private:
 	
 	template<typename Int>
 	[[nodiscard]] constexpr Int _linear() {
-		using Count = decltype(m_linearCounter);
-		static_assert(sizeof (Count) <= sizeof (m_threadId));
-		return Int(m_linearCounter += *reinterpret_cast<const Count*>(&m_threadId));
+		return static_cast<Int>(m_linearCounter += (
+			m_threadId % std::numeric_limits<Counter>::max()
+		));
 	}
 	
 	template<typename Int>
@@ -42,7 +46,8 @@ private:
 	[[nodiscard]] constexpr Data _get_data() {
 		switch (DATA_SET)
 		{
-		case DataSet::LINEAR:
+		case DataSet::LINEAR_8BIT:
+		case DataSet::LINEAR_16BIT:
 			return {
 				.id = _linear<uint64_t>(),
 				.val = _linear<int32_t>(),
@@ -55,12 +60,21 @@ private:
 		case DataSet::ZEROES: return Data{};
 		}
 	}
+	
+	
+	[[nodiscard]] static auto _get_thread_id() {
+		using Result = uint64_t;
+		std::thread::id id = std::this_thread::get_id();
+		static_assert(sizeof (Result) <= sizeof (id));
+		return *reinterpret_cast<const Result*>(&id);
+	}
 public:
 	DataSource()
-		: m_threadId { std::this_thread::get_id() }
-		, m_rngGen{}
-		, m_linearCounter{ 0 }
+		: m_threadId { _get_thread_id() }
+		, m_rngGen{ m_threadId }
+		, m_linearCounter{ static_cast<Counter>(m_threadId) }
 	{}
+	
 	~DataSource() {}
 	
 	[[nodiscard]] std::pair<std::string, int64_t> get() {
