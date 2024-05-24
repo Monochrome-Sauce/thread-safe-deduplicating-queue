@@ -31,20 +31,12 @@ public:
 	
 	BaseQueue(const usize capacity)
 		: m_capacity{ capacity }, m_stop{ false }
-	{ printf("Creating queue with capacity of %u\n", m_capacity); }
+	{ printf("Creating queue with capacity of %'u.\n", m_capacity); }
 	
-	~BaseQueue() {
-		printf("Destroying queue...\n");
-		this->stop();
-	}
+	~BaseQueue() { this->stop(); }
 	
 	constexpr void stop() {
-		if (m_stop.exchange(true)) {
-			printf("Queue was already stopped.\n");
-		}
-		else {
-			printf("Stopping queue...\n");
-		}
+		if (!m_stop.exchange(true)) { printf("Stopping queue...\n"); }
 	}
 	
 	[[nodiscard]] constexpr bool stopped() const { return m_stop.load(); }

@@ -85,7 +85,7 @@ static void blackbox_benchmark() {
 	std::array<std::thread, 128> writers;
 	std::array<std::thread, writers.size()> readers;
 	
-	printf("Running writers for %'zu cycles each...\n", N_CYCLES);
+	printf("Running %zu writers for %'zu cycles each...\n", writers.size(), N_CYCLES);
 	for (std::thread &thrd : writers) {
 		thrd = std::thread([&queue]() {
 			DataSource<DataSet::RANDOM> src;
@@ -96,7 +96,7 @@ static void blackbox_benchmark() {
 		});
 	}
 	
-	printf("Running readers...\n");
+	printf("Running %zu readers...\n", readers.size());
 	for (std::thread &thrd : readers) {
 		thrd = std::thread([&queue]() {
 			try {
@@ -108,31 +108,29 @@ static void blackbox_benchmark() {
 	
 	
 	const chrono::time_point start = chrono::system_clock::now();
-	printf("Waiting for writers...\n");
 	for (std::thread &thrd : writers) { thrd.join(); }
-	
 	queue.stop();
-	printf("Waiting for readers...\n");
 	for (std::thread &thrd : readers) { thrd.join(); }
-	
 	const chrono::nanoseconds diff = chrono::system_clock::now() - start;
-	printf("Queue has %'u values remaining.\n", queue.size());
-	printf("\nBenchmark result: \e[33m%'ldms\e[0m\n",
-		chrono::duration_cast<chrono::milliseconds>(diff).count()
+	
+	printf("> Benchmark finished in \e[33m%'ldms\e[0m with \e[33m%'u\e[0m items remaining.\n",
+		chrono::duration_cast<chrono::milliseconds>(diff).count(), queue.size()
 	);
 }
 
 
 #define RUN_TEST(...) do { \
-	printf(">>> Running test with type: \e[33m" STRINGIFY(__VA_ARGS__) "\e[0m\n"); \
+	puts("================================================================================"); \
+	puts(">>> Running test with type: \e[33m" STRINGIFY(__VA_ARGS__) "\e[0m"); \
 	test<__VA_ARGS__>(); \
-	printf("==========================================\n\n\n"); \
+	puts("\n"); \
 } while (0)
 
 #define RUN_BLACKBOX_BENCHMARK(...) do { \
-	printf(">>> Running blackbox_benchmark with type: \e[33m" STRINGIFY(__VA_ARGS__) "\e[0m\n"); \
+	puts("================================================================================"); \
+	puts(">>> Running blackbox_benchmark with type: \e[33m" STRINGIFY(__VA_ARGS__) "\e[0m"); \
 	blackbox_benchmark<__VA_ARGS__>(); \
-	printf("==========================================\n\n\n"); \
+	puts("\n"); \
 } while (0)
 
 int main() {
