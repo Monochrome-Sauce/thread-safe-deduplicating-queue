@@ -1,6 +1,6 @@
 #pragma once
 #include "BaseQueue.h"
-#include <unordered_map>
+#include <map>
 #include <optional>
 
 
@@ -17,7 +17,7 @@ private:
 	
 	
 	Utils::Queue<Key> m_queue;
-	std::unordered_map<Key, Value> m_map;
+	std::map<Key, Value> m_map;
 	std::mutex m_lock;
 public:
 	Shard() = default;

@@ -6,7 +6,6 @@
 
 struct Key { std::string _; };
 inline bool operator<(const Key &a, const Key &b) { return a._ < b._; }
-inline bool operator==(const Key &a, const Key &b) { return a._ == b._; }
 template<> struct std::hash<Key> {
 	size_t operator()(const Key &self) const noexcept {
 		return std::hash<std::string>{}(self._);
@@ -15,7 +14,6 @@ template<> struct std::hash<Key> {
 
 struct Value { int64_t _; };
 inline bool operator<(const Value &a, const Value &b) { return a._ < b._; }
-inline bool operator==(const Value &a, const Value &b) { return a._ == b._; }
 template<> struct std::hash<Value> {
 	size_t operator()(const Value &self) const noexcept {
 		return std::hash<int64_t>{}(self._);

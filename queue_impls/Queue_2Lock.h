@@ -26,7 +26,17 @@ private:
 		
 		Key key = std::move(m_queue.front());
 		m_queue.pop();
-		return std::move(key);
+		return key;
+	}
+	
+	[[nodiscard]] Value _locked_map_pop(const Key &key) {
+		DECL_LOCK_GUARD(m_mapLock);
+		
+		auto iter = m_map.find(key);
+		assert(iter != m_map.end());
+		Value val = std::move(iter->second);
+		m_map.erase(iter);
+		return val;
 	}
 public:
 	using typename BaseQ::KVPair;
@@ -64,13 +74,7 @@ public:
 		while (true) {
 			std::optional<Key> key = _locked_queue_pop();
 			if (key.has_value()) {
-				DECL_LOCK_GUARD(m_mapLock);
-				
-				auto iter = m_map.find(key.value());
-				assert(iter != m_map.end());
-				Value val = std::move(iter->second);
-				m_map.erase(iter);
-				
+				Value val = _locked_map_pop(*key);
 				return KVPair{ std::move(*key), std::move(val) };
 			}
 			
