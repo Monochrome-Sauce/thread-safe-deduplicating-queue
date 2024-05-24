@@ -1,39 +1,52 @@
+#include "DataSource.h"
 #include "queue_impls/Queue_1Lock.h"
 #include "queue_impls/Queue_2Lock.h"
-#include <array>
-#include <random>
-#include <thread>
+
+
+struct Key { std::string _; };
+inline bool operator<(const Key &a, const Key &b) { return a._ < b._; }
+inline bool operator==(const Key &a, const Key &b) { return a._ == b._; }
+template<> struct std::hash<Key> {
+	size_t operator()(const Key &self) const noexcept {
+		return std::hash<std::string>{}(self._);
+	}
+};
+
+struct Value { int64_t _; };
+inline bool operator<(const Value &a, const Value &b) { return a._ < b._; }
+inline bool operator==(const Value &a, const Value &b) { return a._ == b._; }
+template<> struct std::hash<Value> {
+	size_t operator()(const Value &self) const noexcept {
+		return std::hash<int64_t>{}(self._);
+	}
+};
 
 
 #define check_true(_expr) do { \
-	if (!static_cast<bool>(_expr)) { \
-		printf("\e[31mFailed"); \
-	} else { \
+	if (static_cast<bool>(_expr)) { \
 		printf("\e[32mPassed"); \
+	} else { \
+		printf("\e[31mFailed"); \
 	} \
 	printf(" at line %u:\e[0m check_true(\e[33m%s\e[0m)\n", __LINE__, STRINGIFY(_expr)); \
 } while (0)
 
 #define check_false(_expr) do { \
 	if (!static_cast<bool>(_expr)) { \
-		printf("\e[31mFailed"); \
-	} else { \
 		printf("\e[32mPassed"); \
+	} else { \
+		printf("\e[31mFailed"); \
 	} \
 	printf(" at line %u:\e[0m check_false(\e[33m%s\e[0m)\n", __LINE__, STRINGIFY(_expr)); \
 } while (0)
 
-#define check_reachable() do { \
+#define check_reachable_true() do { \
 	printf("\e[32mPassed at line %u:\e[0m check_reachable()\n", __LINE__); \
 } while (0)
 
-
-struct Key { std::string _; };
-inline bool operator<(const Key &a, const Key &b) { return a._ < b._; }
-
-struct Value { int64_t _; };
-inline bool operator<(const Value &a, const Value &b) { return a._ < b._; }
-
+#define check_reachable_false() do { \
+	printf("\e[31mFailed at line %u:\e[0m check_reachable()\n", __LINE__); \
+} while (0)
 
 template<typename Queue>
 static void test() {
@@ -42,91 +55,34 @@ static void test() {
 	check_true(queue.size() == 0);
 	check_true(queue.try_write(Key{ "1" }, Value{ 968137 }));
 	check_true(queue.size() == 1);
-	check_false(queue.try_write(Key{ "2" }, Value{ 34905 }));
+	check_true(queue.try_write(Key{ "2" }, Value{ 34905 }));
 	check_true(queue.size() == 2);
+	check_false(queue.try_write(Key{ "3" }, Value{ -34905 }));
 	
 	static_cast<void>(queue.read());
 	check_true(queue.size() == 1);
+	static_cast<void>(queue.read());
+	check_true(queue.size() == 0);
 	
 	queue.stop();
 	try {
 		static_cast<void>(queue.read());
 	}
 	catch (const Utils::queue_stopped_exception&) {
-		check_reachable();
+		check_reachable_true();
+	}
+	try {
+		check_true(queue.try_write(Key{ "859" }, Value{ 69821 }));
+		check_true(queue.try_write(Key{ "312" }, Value{ 9752 }));
+		check_false(queue.try_write(Key{ "592" }, Value{ 5823 }));
+		check_false(queue.try_write(Key{ "4124" }, Value{ 978736 }));
+		check_true(queue.try_write(Key{ "312" }, Value{ 21 }));
+		check_reachable_true();
+	}
+	catch (const Utils::queue_stopped_exception&) {
+		check_reachable_false();
 	}
 }
-
-
-enum class DataSet {
-	LINEAR,
-	RANDOM,
-	ZEROES,
-};
-
-template<DataSet DATA_SET>
-class DataSource
-{
-private:
-	const std::thread::id m_threadId;
-	std::mt19937 m_rngGen;
-	uint8_t m_linearCounter;
-	
-	struct Data {
-		uint64_t id = {};
-		int32_t val = 0;
-	};
-	
-	
-	template<typename Int>
-	[[nodiscard]] constexpr Int _linear() {
-		using Count = decltype(m_linearCounter);
-		static_assert(sizeof (Count) <= sizeof (m_threadId));
-		return Int(m_linearCounter += *reinterpret_cast<const Count*>(&m_threadId));
-	}
-	
-	template<typename Int>
-	[[nodiscard]] constexpr Int _rand() {
-		std::uniform_int_distribution<Int> distribution(
-			std::numeric_limits<Int>::min(), std::numeric_limits<Int>::max()
-		);
-		return distribution(m_rngGen);
-	}
-	
-	[[nodiscard]] constexpr Data _get_data() {
-		switch (DATA_SET)
-		{
-		case DataSet::LINEAR:
-			return {
-				.id = _linear<uint64_t>(),
-				.val = _linear<int32_t>(),
-			};
-		case DataSet::RANDOM:
-			return {
-				.id = _rand<uint64_t>(),
-				.val = _rand<int32_t>(),
-			};
-		case DataSet::ZEROES: return Data{};
-		}
-	}
-public:
-	DataSource()
-		: m_threadId { std::this_thread::get_id() }
-		, m_rngGen{}
-		, m_linearCounter{ 0 }
-	{}
-	~DataSource() {}
-	
-	[[nodiscard]] std::pair<std::string, int64_t> get() {
-		const Data data = _get_data();
-		
-		char buf[sizeof (data.id) * 2 + 1] = {};
-		const int len = snprintf(buf, sizeof (buf), "%016lX", data.id);
-		assert(len == (sizeof (buf) - 1));
-		
-		return std::pair<std::string, int64_t>(std::string_view(buf, len), data.val);
-	}
-};
 
 template<typename Queue, size_t N_CYCLES = (1 << 12)>
 static void blackbox_benchmark() {
