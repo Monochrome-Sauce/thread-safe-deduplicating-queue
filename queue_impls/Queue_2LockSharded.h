@@ -76,14 +76,13 @@ private:
 	
 	
 	std::array<Shard<BaseQ>, N_SHARDS> m_shards;
-	std::atomic<usize> m_readIndex, m_size;
+	std::atomic<usize> m_size;
 	
 	[[nodiscard]] constexpr static
 	usize _index_from_key(const Key &key) { return std::hash<Key>{}(key); }
 public:
 	ShardArray(const usize capacity)
 		: BaseQ{ capacity }
-		, m_readIndex{ 0 }
 		, m_size{ 0 }
 	{}
 	
