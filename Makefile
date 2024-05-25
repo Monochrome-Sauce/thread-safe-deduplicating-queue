@@ -1,8 +1,8 @@
 CXX := g++
 CXXFLAGS := -std=c++17 -Og -g
-CPPFLAGS := -Werror -Wall -Wextra
-CPPFLAGS += $(addprefix -Wno-error=,unused-parameter unused-variable)
-CPPFLAGS += $(addprefix -fsanitize=,undefined unreachable null bounds)
+CXXFLAGS := -Werror -Wall -Wextra
+CXXFLAGS += $(addprefix -Wno-error=,unused-parameter unused-variable)
+CXXFLAGS += $(addprefix -fsanitize=,undefined unreachable null bounds)
 
 BUILD_DIR := build
 TARGET    := ${BUILD_DIR}/queue-test
@@ -22,7 +22,7 @@ _display_recipe_header  = @echo -e '\n\e[95m>>> $@\e[0m: \e[90m$^\e[0m'
 all: compile_commands build
 
 ${TARGET}: ${SOURCE_OBJECTS} ;${_display_recipe_header}
-	${CXX} ${CXXFLAGS} ${CPPFLAGS} -o $@ $^ ${LDFLAGS}
+	${CXX} ${CXXFLAGS} -o $@ $^ ${LDFLAGS}
 
 -include $(addsuffix .mk, ${SOURCE_OBJECTS})
 $(info Makefiles: $(strip ${MAKEFILE_LIST}))
@@ -30,7 +30,7 @@ $(info Sources: $(strip ${SOURCE_FILES}))
 
 ${BUILD_DIR}/%.cpp.o: %.cpp ;${_display_recipe_header}
 	${_mkdir} $(dir $@)
-	${CXX} -c $< ${CXXFLAGS} ${CPPFLAGS} -o $@ -MMD -MF $@.mk
+	${CXX} -c $< ${CXXFLAGS} -o $@ -MMD -MF $@.mk
 
 
 define JqFilter :=
