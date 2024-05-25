@@ -67,9 +67,6 @@ public:
 	}
 };
 
-/* An array of locks that never compete.
- * This is the simplest and acts as a reference implementation.
- */
 template<typename Key, typename Value, size_t N_SHARDS>
 class ShardArray : public BaseQueue<Key, Value>
 {
@@ -125,5 +122,13 @@ public:
 
 }
 
+/* An array of queues that never compete and each have 2 locks.
+ * Round-robin is used to find the correct queue when reading.
+ *
+ * Similar to the single-lock implementation, but uses the fact that
+ * the queue and map can be locked separately when ordered correctly:
+ * write(map) -> write(queue) -> read(queue) -> read(map)
+ * This shows that an item can only be removed from the map if it was added to the queue.
+ */
 template<typename Key, typename Value, size_t N_SHARDS>
 using Queue_2LockSharded = Impl::Queue_2LockSharded::ShardArray<Key, Value, N_SHARDS>;

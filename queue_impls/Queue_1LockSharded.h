@@ -52,9 +52,6 @@ public:
 	}
 };
 
-/* An array of locks that never compete.
- * This is the simplest and acts as a reference implementation.
- */
 template<typename Key, typename Value, size_t N_SHARDS>
 class ShardArray : public BaseQueue<Key, Value>
 {
@@ -110,5 +107,8 @@ public:
 
 }
 
+/* An array of queues that never compete and each have 1 lock.
+ * Round-robin is used to find the correct queue when reading.
+ */
 template<typename Key, typename Value, size_t N_SHARDS>
 using Queue_1LockSharded = Impl::Queue_1LockSharded::ShardArray<Key, Value, N_SHARDS>;
