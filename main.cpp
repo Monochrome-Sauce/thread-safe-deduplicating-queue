@@ -86,6 +86,16 @@ static void blackbox_benchmark() {
 	std::array<std::thread, 128> writers;
 	std::array<std::thread, writers.size()> readers;
 	
+	printf("Running %zu readers...\n", readers.size());
+	for (std::thread &thrd : readers) {
+		thrd = std::thread([&queue]() {
+			try {
+				while (true) { queue.read(); }
+			}
+			catch (const Utils::queue_stopped_exception&) {}
+		});
+	}
+	
 	printf("Running %zu writers for %'zu cycles each...\n", writers.size(), N_CYCLES);
 	for (std::thread &thrd : writers) {
 		thrd = std::thread([&queue]() {
@@ -94,16 +104,6 @@ static void blackbox_benchmark() {
 				auto [id, number] = src.get();
 				static_cast<void>(queue.try_write(Key{ id }, Value{ number }));
 			}
-		});
-	}
-	
-	printf("Running %zu readers...\n", readers.size());
-	for (std::thread &thrd : readers) {
-		thrd = std::thread([&queue]() {
-			try {
-				while (true) { queue.read(); }
-			}
-			catch (const Utils::queue_stopped_exception&) {}
 		});
 	}
 	
