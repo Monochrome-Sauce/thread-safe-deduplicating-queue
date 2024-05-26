@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -std=c++11 -O2 -Werror -Wall -Wextra
+CXXFLAGS := -std=c++17 -O2 -Werror -Wall -Wextra
 
 BUILD_DIR := build
 TARGET    := ${BUILD_DIR}/queue-test

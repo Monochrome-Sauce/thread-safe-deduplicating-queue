@@ -1,7 +1,7 @@
 This small project tests different implementations of a thread-safe queue that
   deduplicates based on the inserted key.
 
-Use `make run` to build and run the tests, which only require C++11.
+Use `make run` to build and run the tests, which only require C++17.
 
 Notes:
 1. Short non-exhaustive descriptions of each implementation can be found next to
