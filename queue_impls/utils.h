@@ -2,6 +2,7 @@
 #include <array>
 #include <atomic>
 #include <cassert>
+#include <map>
 #include <mutex>
 #include <queue>
 #include <stdexcept>
@@ -77,4 +78,12 @@ namespace Utils
 	chrono::milliseconds to_milli(chrono::nanoseconds t) {
 		return chrono::duration_cast<chrono::milliseconds>(t);
 	};
+	
+	template<typename K, typename V>
+	[[nodiscard]] constexpr
+	auto map_pop_iter(std::map<K, V> &map, typename std::map<K, V>::iterator iter) {
+		std::pair result { std::move(iter->first), std::move(iter->second) };
+		map.erase(iter);
+		return result;
+	}
 }

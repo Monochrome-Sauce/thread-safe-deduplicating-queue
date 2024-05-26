@@ -1,6 +1,5 @@
 #pragma once
 #include "BaseQueue.h"
-#include <map>
 #include <optional>
 
 
@@ -15,8 +14,7 @@ private:
 	using Key = typename BaseQueue::key_type;
 	using Value = typename BaseQueue::value_type;
 	
-	
-	Utils::Queue<Key> m_queue;
+	Utils::Queue<typename std::map<Key, Value>::iterator> m_queue;
 	std::map<Key, Value> m_map;
 	std::mutex m_lock;
 public:
@@ -29,9 +27,13 @@ public:
 			if (iter == m_map.end()) { return false; }
 			iter->second = value;
 		}
-		else if (DECL_LOCK_GUARD(m_lock); m_map.insert_or_assign(key, value).second) {
-			m_queue.push(key);
-			return false;
+		else {
+			DECL_LOCK_GUARD(m_lock);
+			auto [iter, inserted] = m_map.insert_or_assign(key, value);
+			if (inserted) {
+				m_queue.push(iter);
+				return false;
+			}
 		}
 		return true;
 	}
@@ -39,14 +41,7 @@ public:
 	[[nodiscard]] std::optional<KVPair> try_read() {
 		DECL_LOCK_GUARD(m_lock);
 		if (m_queue.empty()) { return std::nullopt; }
-		Key key = m_queue.pop();
-		
-		auto iter = m_map.find(key);
-		assert(iter != m_map.end());
-		Value val = std::move(iter->second);
-		m_map.erase(iter);
-		
-		return KVPair{ std::move(key), std::move(val) };
+		return Utils::map_pop_iter(m_map, m_queue.pop());
 	}
 };
 

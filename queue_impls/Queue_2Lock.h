@@ -1,6 +1,5 @@
 #pragma once
 #include "BaseQueue.h"
-#include <map>
 #include <optional>
 
 
@@ -16,24 +15,14 @@ class Queue_2Lock : public BaseQueue<Key, Value>
 private:
 	using BaseQ = BaseQueue<Key, Value>;
 	
-	Utils::Queue<Key> m_queue;
+	Utils::Queue<typename std::map<Key, Value>::iterator> m_queue;
 	std::map<Key, Value> m_map;
 	std::mutex m_queueLock, m_mapLock;
 	
-	[[nodiscard]] std::optional<Key> _locked_queue_pop() {
+	[[nodiscard]] std::optional<typename std::map<Key, Value>::iterator> _locked_queue_pop() {
 		DECL_LOCK_GUARD(m_queueLock);
 		if (m_queue.empty()) { return std::nullopt; }
 		return m_queue.pop();
-	}
-	
-	[[nodiscard]] Value _locked_map_pop(const Key &key) {
-		DECL_LOCK_GUARD(m_mapLock);
-		
-		auto iter = m_map.find(key);
-		assert(iter != m_map.end());
-		Value val = std::move(iter->second);
-		m_map.erase(iter);
-		return val;
 	}
 public:
 	using typename BaseQ::KVPair;
@@ -57,20 +46,20 @@ public:
 			}
 			iter->second = value;
 		}
-		else if (m_map.insert_or_assign(key, value).second) {
+		else if (auto [iter, inserted] = m_map.insert_or_assign(key, value); inserted) {
 			uniqueLock.unlock();
 			DECL_LOCK_GUARD(m_queueLock);
-			m_queue.push(key);
+			m_queue.push(iter);
 		}
 		return true;
 	}
 	
 	KVPair read() {
 		while (true) {
-			std::optional<Key> key = _locked_queue_pop();
-			if (key.has_value()) {
-				Value val = _locked_map_pop(*key);
-				return KVPair{ std::move(*key), std::move(val) };
+			std::optional iter = _locked_queue_pop();
+			if (iter.has_value()) {
+				DECL_LOCK_GUARD(m_mapLock);
+				return Utils::map_pop_iter(m_map, *iter);
 			}
 			
 			if (this->stopped()) {

@@ -1,6 +1,5 @@
 #pragma once
 #include "BaseQueue.h"
-#include <map>
 
 
 /* Single global lock.
@@ -12,7 +11,7 @@ class Queue_1Lock : public BaseQueue<Key, Value>
 private:
 	using BaseQ = BaseQueue<Key, Value>;
 	
-	Utils::Queue<Key> m_queue;
+	Utils::Queue<typename std::map<Key, Value>::iterator> m_queue;
 	std::map<Key, Value> m_map;
 	std::mutex m_lock;
 public:
@@ -37,8 +36,8 @@ public:
 			}
 			iter->second = value;
 		}
-		else if (m_map.insert_or_assign(key, value).second) {
-			m_queue.push(key);
+		else if (auto [iter, inserted] = m_map.insert_or_assign(key, value); inserted) {
+			m_queue.push(iter);
 		}
 		return true;
 	}
@@ -46,14 +45,7 @@ public:
 	constexpr KVPair read() {
 		while (true) {
 			if (DECL_LOCK_GUARD(m_lock); !m_queue.empty()) {
-				Key key = m_queue.pop();
-				
-				auto iter = m_map.find(key);
-				assert(iter != m_map.end());
-				Value val = std::move(iter->second);
-				m_map.erase(iter);
-				
-				return KVPair{ std::move(key), std::move(val) };
+				return Utils::map_pop_iter(m_map, m_queue.pop());
 			}
 			
 			if (this->stopped()) {
