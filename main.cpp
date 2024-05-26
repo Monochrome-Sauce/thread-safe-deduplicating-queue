@@ -79,7 +79,7 @@ static void test() {
 	}
 }
 
-template<typename Queue, size_t N_CYCLES = (1 << 12)>
+template<typename Queue>
 static void blackbox_benchmark() {
 	Queue queue{ UINT32_MAX };
 	
@@ -96,7 +96,10 @@ static void blackbox_benchmark() {
 		});
 	}
 	
-	printf("Running %zu writers for %'zu cycles each...\n", writers.size(), N_CYCLES);
+	constexpr size_t N_CYCLES = (1 << 14);
+	printf("Running %zu writers for %'zu cycles each (total cycles: %'zu)...\n",
+		writers.size(), N_CYCLES, writers.size() * N_CYCLES
+	);
 	for (std::thread &thrd : writers) {
 		thrd = std::thread([&queue]() {
 			DataSource<DataSet::RANDOM> src;
