@@ -16,7 +16,6 @@
 
 
 namespace chrono = std::chrono;
-namespace fs = std::filesystem;
 
 namespace Utils
 {
@@ -47,6 +46,12 @@ namespace Utils
 		
 		[[nodiscard]] constexpr auto begin() const { return this->c.begin(); }
 		[[nodiscard]] constexpr auto end() const { return this->c.end(); }
+		
+		[[nodiscard]] constexpr auto pop() {
+			auto val = std::move(Self::front());
+			Self::pop();
+			return val;
+		}
 	};
 	
 	
@@ -67,4 +72,9 @@ namespace Utils
 	std::array<T, N> make_array(F &&func) {
 		return make_array__impl<T>(std::forward<F>(func), std::make_index_sequence<N>{});
 	}
+	
+	[[nodiscard]] constexpr
+	chrono::milliseconds to_milli(chrono::nanoseconds t) {
+		return chrono::duration_cast<chrono::milliseconds>(t);
+	};
 }
