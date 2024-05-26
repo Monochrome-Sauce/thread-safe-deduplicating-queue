@@ -87,10 +87,12 @@ static void test() {
 
 template<typename Queue>
 static void blackbox_benchmark() {
-	Queue queue{ UINT32_MAX };
+	constexpr size_t N_CYCLES = (1 << 16);
+	constexpr size_t N_THREADS = 128;
+	Queue queue{ N_CYCLES };
 	
-	std::array<std::thread, 128> writers;
-	std::array<std::thread, writers.size()> readers;
+	std::array<std::thread, N_THREADS> writers;
+	std::array<std::thread, N_THREADS> readers;
 	const chrono::time_point tpStart = chrono::system_clock::now();
 	
 	printf("Running %zu readers...\n", readers.size());
@@ -103,7 +105,6 @@ static void blackbox_benchmark() {
 		});
 	}
 	
-	constexpr size_t N_CYCLES = (1 << 16);
 	printf("Running %zu writers for %'zu cycles each (total cycles: %'zu)...\n",
 		writers.size(), N_CYCLES, writers.size() * N_CYCLES
 	);
@@ -112,7 +113,9 @@ static void blackbox_benchmark() {
 			DataSource<DataSet::LINEAR_16BIT> src;
 			for (size_t i = 0; i < N_CYCLES; ++i) {
 				auto [id, number] = src.get();
-				static_cast<void>(queue.try_write(Key{ id }, Value{ number }));
+				if (!queue.try_write(Key{ id }, Value{ number })) {
+					printf("\e[31mCapacity reached at cycle %'zu.\e[m\n", i);
+				}
 			}
 		});
 	}
