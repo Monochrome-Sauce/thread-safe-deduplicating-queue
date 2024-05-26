@@ -85,6 +85,7 @@ static void blackbox_benchmark() {
 	
 	std::array<std::thread, 128> writers;
 	std::array<std::thread, writers.size()> readers;
+	const chrono::time_point tpStart = chrono::system_clock::now();
 	
 	printf("Running %zu readers...\n", readers.size());
 	for (std::thread &thrd : readers) {
@@ -111,14 +112,24 @@ static void blackbox_benchmark() {
 	}
 	
 	
-	const chrono::time_point start = chrono::system_clock::now();
+	const chrono::time_point tpWaitWriters = chrono::system_clock::now();
 	for (std::thread &thrd : writers) { thrd.join(); }
+	const chrono::time_point tpWaitReaders = chrono::system_clock::now();
 	queue.stop();
 	for (std::thread &thrd : readers) { thrd.join(); }
-	const chrono::nanoseconds diff = chrono::system_clock::now() - start;
+	const chrono::time_point tpEnd = chrono::system_clock::now();
 	
-	printf("> Benchmark finished in \e[33m%'ldms\e[0m with \e[33m%'u\e[0m items remaining.\n",
-		chrono::duration_cast<chrono::milliseconds>(diff).count(), queue.size()
+	printf("> Benchmark ran for \e[93m%'ld\e[0mms with \e[93m%'u\e[0m items left in queue.\n",
+		Utils::to_milli(tpEnd - tpStart).count(), queue.size()
+	);
+	printf("Waited \e[33m%'ld\e[0mms for writer threads.\n",
+		Utils::to_milli(tpWaitReaders - tpWaitWriters).count()
+	);
+	printf("Waited \e[33m%'ld\e[0mms for reader threads.\n",
+		Utils::to_milli(tpEnd - tpWaitReaders).count()
+	);
+	printf("Waited \e[33m%'ld\e[0mms on all threads.\n",
+		Utils::to_milli(tpEnd - tpWaitWriters).count()
 	);
 }
 
