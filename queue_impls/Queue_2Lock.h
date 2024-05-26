@@ -14,6 +14,7 @@ class Queue_2Lock : public BaseQueue<Key, Value>
 {
 private:
 	using BaseQ = BaseQueue<Key, Value>;
+	using typename BaseQ::KVPair;
 	
 	Utils::Queue<typename std::map<Key, Value>::iterator> m_queue;
 	std::map<Key, Value> m_map;
@@ -25,9 +26,6 @@ private:
 		return m_queue.pop();
 	}
 public:
-	using typename BaseQ::KVPair;
-	
-	
 	Queue_2Lock(const usize capacity)
 		: BaseQ{ capacity }
 	{}

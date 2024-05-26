@@ -50,8 +50,7 @@ class ShardArray : public BaseQueue<Key, Value>
 {
 private:
 	using BaseQ = BaseQueue<Key, Value>;
-	using KVPair = typename BaseQ::KVPair;
-	
+	using typename BaseQ::KVPair;
 	
 	std::array<Shard<BaseQ>, N_SHARDS> m_shards;
 	std::atomic<usize> m_size;

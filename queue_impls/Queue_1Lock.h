@@ -10,14 +10,12 @@ class Queue_1Lock : public BaseQueue<Key, Value>
 {
 private:
 	using BaseQ = BaseQueue<Key, Value>;
+	using typename BaseQ::KVPair;
 	
 	Utils::Queue<typename std::map<Key, Value>::iterator> m_queue;
 	std::map<Key, Value> m_map;
 	std::mutex m_lock;
 public:
-	using typename BaseQ::KVPair;
-	
-	
 	Queue_1Lock(const usize capacity)
 		: BaseQ{ capacity }
 	{}
