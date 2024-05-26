@@ -30,25 +30,23 @@ public:
 	
 	bool try_write(const Key &key, const Value &value) {
 		DECL_LOCK_GUARD(m_lock);
-		auto iter = m_map.find(key);
-		if (iter != m_map.end()) { // dedup
+		if (m_queue.size() >= this->capacity()) { // try to dedup
+			auto iter = m_map.find(key);
+			if (iter == m_map.end()) {
+				return false;
+			}
 			iter->second = value;
-			return true;
 		}
-		
-		if (m_queue.size() >= this->capacity()) {
-			return false;
+		else if (m_map.insert_or_assign(key, value).second) {
+			m_queue.push(key);
 		}
-		m_map[key] = value;
-		m_queue.push(key);
 		return true;
 	}
 	
 	constexpr KVPair read() {
 		while (true) {
 			if (DECL_LOCK_GUARD(m_lock); !m_queue.empty()) {
-				Key key = std::move(m_queue.front());
-				m_queue.pop();
+				Key key = m_queue.pop();
 				
 				auto iter = m_map.find(key);
 				assert(iter != m_map.end());

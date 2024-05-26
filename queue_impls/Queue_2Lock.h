@@ -23,10 +23,7 @@ private:
 	[[nodiscard]] std::optional<Key> _locked_queue_pop() {
 		DECL_LOCK_GUARD(m_queueLock);
 		if (m_queue.empty()) { return std::nullopt; }
-		
-		Key key = std::move(m_queue.front());
-		m_queue.pop();
-		return key;
+		return m_queue.pop();
 	}
 	
 	[[nodiscard]] Value _locked_map_pop(const Key &key) {
@@ -52,19 +49,17 @@ public:
 	}
 	
 	bool try_write(const Key &key, const Value &value) {
-		{ DECL_LOCK_GUARD(m_mapLock);
+		std::unique_lock<std::mutex> uniqueLock{ m_mapLock };
+		if (m_map.size() >= this->capacity()) { // try to dedup
 			auto iter = m_map.find(key);
-			if (iter != m_map.end()) { // dedup
-				iter->second = value;
-				return true;
-			}
-			
-			if (m_map.size() >= this->capacity()) {
+			if (iter == m_map.end()) {
 				return false;
 			}
-			m_map[key] = value;
+			iter->second = value;
 		}
-		{ DECL_LOCK_GUARD(m_queueLock);
+		else if (m_map.insert_or_assign(key, value).second) {
+			uniqueLock.unlock();
+			DECL_LOCK_GUARD(m_queueLock);
 			m_queue.push(key);
 		}
 		return true;

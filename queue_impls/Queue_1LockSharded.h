@@ -23,25 +23,23 @@ public:
 	Shard() = default;
 	
 	bool write(const Key &key, const Value &value, bool dedupOnly) {
-		DECL_LOCK_GUARD(m_lock);
-		auto iter = m_map.find(key);
-		if (iter != m_map.end()) { // dedup
+		if (dedupOnly) {
+			DECL_LOCK_GUARD(m_lock);
+			auto iter = m_map.find(key);
+			if (iter == m_map.end()) { return false; }
 			iter->second = value;
-			return true;
 		}
-		else if (!dedupOnly) {
-			m_map[key] = value;
+		else if (DECL_LOCK_GUARD(m_lock); m_map.insert_or_assign(key, value).second) {
 			m_queue.push(key);
+			return false;
 		}
-		return false;
+		return true;
 	}
 	
 	[[nodiscard]] std::optional<KVPair> try_read() {
 		DECL_LOCK_GUARD(m_lock);
 		if (m_queue.empty()) { return std::nullopt; }
-		
-		Key key = std::move(m_queue.front());
-		m_queue.pop();
+		Key key = m_queue.pop();
 		
 		auto iter = m_map.find(key);
 		assert(iter != m_map.end());
@@ -78,7 +76,7 @@ public:
 	bool try_write(const Key &key, const Value &value) {
 		const bool overflow = (m_size.fetch_add(1) >= this->capacity());
 		
-		auto &shard = m_shards[_index_from_key(key) % m_shards.size()];
+		auto &shard = m_shards[_index_from_key(key) % N_SHARDS];
 		const bool deduped = shard.write(key, value, overflow);
 		
 		if (overflow || deduped) {
