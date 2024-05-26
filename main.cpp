@@ -97,13 +97,13 @@ static void blackbox_benchmark() {
 		});
 	}
 	
-	constexpr size_t N_CYCLES = (1 << 14);
+	constexpr size_t N_CYCLES = (1 << 16);
 	printf("Running %zu writers for %'zu cycles each (total cycles: %'zu)...\n",
 		writers.size(), N_CYCLES, writers.size() * N_CYCLES
 	);
 	for (std::thread &thrd : writers) {
 		thrd = std::thread([&queue]() {
-			DataSource<DataSet::RANDOM> src;
+			DataSource<DataSet::LINEAR_16BIT> src;
 			for (size_t i = 0; i < N_CYCLES; ++i) {
 				auto [id, number] = src.get();
 				static_cast<void>(queue.try_write(Key{ id }, Value{ number }));
