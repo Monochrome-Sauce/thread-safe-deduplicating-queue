@@ -22,7 +22,7 @@ struct Value { int64_t _; };
 	} else { \
 		printf("\e[31mFailed"); \
 	} \
-	printf(" at line %u:\e[0m check_true(\e[33m%s\e[0m)\n", __LINE__, STRINGIFY(_expr)); \
+	printf(" at line %u:\e[m check_true(\e[33m%s\e[m)\n", __LINE__, STRINGIFY(_expr)); \
 } while (0)
 
 #define check_false(_expr) do { \
@@ -31,16 +31,22 @@ struct Value { int64_t _; };
 	} else { \
 		printf("\e[31mFailed"); \
 	} \
-	printf(" at line %u:\e[0m check_false(\e[33m%s\e[0m)\n", __LINE__, STRINGIFY(_expr)); \
+	printf(" at line %u:\e[m check_false(\e[33m%s\e[m)\n", __LINE__, STRINGIFY(_expr)); \
 } while (0)
 
 #define check_reachable_true() do { \
-	printf("\e[32mPassed at line %u:\e[0m check_reachable()\n", __LINE__); \
+	printf("\e[32mPassed at line %u:\e[m check_reachable()\n", __LINE__); \
 } while (0)
 
 #define check_reachable_false() do { \
-	printf("\e[31mFailed at line %u:\e[0m check_reachable()\n", __LINE__); \
+	printf("\e[31mFailed at line %u:\e[m check_reachable()\n", __LINE__); \
 } while (0)
+
+static void print_kvpair(const std::pair<Key, Value> &pair) {
+	printf("std::pair<Key, Value>{ \e[94mkey\e[m: \e[96m%s\e[m, \e[94mvalue\e[m: \e[96m%ld\e[m }\n",
+		pair.first._.c_str(), pair.second._
+	);
+}
 
 template<typename Queue>
 static void test() {
@@ -54,14 +60,14 @@ static void test() {
 	check_true(queue.size() == 2);
 	check_false(queue.try_write(Key{ "3" }, Value{ -34905 }));
 	
-	static_cast<void>(queue.read());
+	print_kvpair(queue.read());
 	check_true(queue.size() == 1);
-	static_cast<void>(queue.read());
+	print_kvpair(queue.read());
 	check_true(queue.size() == 0);
 	
 	queue.stop();
 	try {
-		static_cast<void>(queue.read());
+		print_kvpair(queue.read());
 	}
 	catch (const Utils::queue_stopped_exception&) {
 		check_reachable_true();
@@ -119,16 +125,16 @@ static void blackbox_benchmark() {
 	for (std::thread &thrd : readers) { thrd.join(); }
 	const chrono::time_point tpEnd = chrono::system_clock::now();
 	
-	printf("> Benchmark ran for \e[93m%'ld\e[0mms with \e[93m%'u\e[0m items left in queue.\n",
+	printf("> Benchmark ran for \e[93m%'ld\e[mms with \e[93m%'u\e[m items left in queue.\n",
 		Utils::to_milli(tpEnd - tpStart).count(), queue.size()
 	);
-	printf("Waited \e[33m%'ld\e[0mms for writer threads.\n",
+	printf("Waited \e[33m%'ld\e[mms for writer threads.\n",
 		Utils::to_milli(tpWaitReaders - tpWaitWriters).count()
 	);
-	printf("Waited \e[33m%'ld\e[0mms for reader threads.\n",
+	printf("Waited \e[33m%'ld\e[mms for reader threads.\n",
 		Utils::to_milli(tpEnd - tpWaitReaders).count()
 	);
-	printf("Waited \e[33m%'ld\e[0mms on all threads.\n",
+	printf("Waited \e[33m%'ld\e[mms on all threads.\n",
 		Utils::to_milli(tpEnd - tpWaitWriters).count()
 	);
 }
@@ -136,14 +142,14 @@ static void blackbox_benchmark() {
 
 #define RUN_TEST(...) do { \
 	puts("================================================================================"); \
-	puts(">>> Running test with type: \e[33m" STRINGIFY(__VA_ARGS__) "\e[0m"); \
+	puts(">>> Running test with type: \e[33m" STRINGIFY(__VA_ARGS__) "\e[m"); \
 	test<__VA_ARGS__>(); \
 	puts("\n"); \
 } while (0)
 
 #define RUN_BLACKBOX_BENCHMARK(...) do { \
 	puts("================================================================================"); \
-	puts(">>> Running blackbox_benchmark with type: \e[33m" STRINGIFY(__VA_ARGS__) "\e[0m"); \
+	puts(">>> Running blackbox_benchmark with type: \e[33m" STRINGIFY(__VA_ARGS__) "\e[m"); \
 	blackbox_benchmark<__VA_ARGS__>(); \
 	puts("\n"); \
 } while (0)
