@@ -10,13 +10,19 @@ SOURCE_OBJECTS := $(addprefix ${BUILD_DIR}/, $(addsuffix .o, ${SOURCE_FILES}))
 
 _mkdir := mkdir --verbose --parents --
 _rmdir := rm --verbose --one-file-system --recursive --
-_display_recipe_header  = @echo -e '\n\e[95m>>> $@\e[0m: \e[90m$^\e[0m'
+_display_recipe_header  = @echo -e '\n\e[95m>>> $@\e[m: \e[90m$^\e[m'
 
 
-.PHONY: all build clean run
+.PHONY: help build clean run
 .SECONDARY: ${SOURCE_OBJECTS}
 
-all: build
+help: ;${_display_recipe_header}
+	@printf ' \e[33mmake\e[m:\n    Short for `\e[33mmake help\e[m`.\n'
+	@printf ' \e[33mmake build\e[m:\n    Build the binary and create Make files to track changes in the header files.\n'
+	@printf ' \e[33mmake clean\e[m:\n    Remove auxilary files and build files.\n'
+	@printf ' \e[33mmake help\e[m:\n    Show this help message.\n'
+	@printf ' \e[33mmake run\e[m:\n    Execute the binary resulting from `make build`.\n'
+	@printf 'TLDR: `\e[33mmake clean build run\e[m`\n'
 
 ${TARGET}: ${SOURCE_OBJECTS} ;${_display_recipe_header}
 	${CXX} ${CXXFLAGS} -o $@ $^ ${LDFLAGS}
@@ -35,5 +41,5 @@ build: ${TARGET}
 clean: ;${_display_recipe_header}
 	-${_rmdir} '${BUILD_DIR}'
 
-run: build ;${_display_recipe_header}
-	exec ${TARGET}
+run: ;${_display_recipe_header}
+	exec '${TARGET}'
