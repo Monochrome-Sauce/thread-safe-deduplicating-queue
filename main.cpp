@@ -16,31 +16,22 @@ template<> struct std::hash<Key> {
 struct Value { int64_t _; };
 
 
-#define check_true(_expr) do { \
-	if (static_cast<bool>(_expr)) { \
-		printf("\e[32mPassed"); \
-	} else { \
-		printf("\e[31mFailed"); \
-	} \
-	printf(" at line %u:\e[m check_true(\e[33m%s\e[m)\n", __LINE__, STRINGIFY(_expr)); \
-} while (0)
+constexpr static void check__impl(const bool passed, const size_t line, const char *msg) {
+	assert(msg != nullptr);
+	printf("%s at line %zu:\e[m %s\n",
+		passed ? "\e[32mPassed" : "\e[31mFailed",
+		line, msg
+	);
+}
 
-#define check_false(_expr) do { \
-	if (!static_cast<bool>(_expr)) { \
-		printf("\e[32mPassed"); \
-	} else { \
-		printf("\e[31mFailed"); \
-	} \
-	printf(" at line %u:\e[m check_false(\e[33m%s\e[m)\n", __LINE__, STRINGIFY(_expr)); \
-} while (0)
+#define check_true(_expr) \
+	check__impl(bool(_expr), __LINE__, "check_true(\e[33m" STRINGIFY(_expr) "\e[m)")
 
-#define check_reachable_true() do { \
-	printf("\e[32mPassed at line %u:\e[m check_reachable()\n", __LINE__); \
-} while (0)
+#define check_reachable_true() \
+	check__impl(true, __LINE__, "check_reachable()")
 
-#define check_reachable_false() do { \
-	printf("\e[31mFailed at line %u:\e[m check_reachable()\n", __LINE__); \
-} while (0)
+#define check_reachable_false() \
+	check__impl(false, __LINE__, "check_reachable()")
 
 static void print_kvpair(const std::pair<Key, Value> &pair) {
 	printf("std::pair<Key, Value>{ \e[94mkey\e[m: \e[96m%s\e[m, \e[94mvalue\e[m: \e[96m%ld\e[m }\n",
@@ -58,7 +49,7 @@ static void test() {
 	check_true(queue.size() == 1);
 	check_true(queue.try_write(Key{ "2" }, Value{ 34905 }));
 	check_true(queue.size() == 2);
-	check_false(queue.try_write(Key{ "3" }, Value{ -34905 }));
+	check_true(!queue.try_write(Key{ "3" }, Value{ -34905 }));
 	
 	print_kvpair(queue.read());
 	check_true(queue.size() == 1);
@@ -75,8 +66,8 @@ static void test() {
 	try {
 		check_true(queue.try_write(Key{ "859" }, Value{ 69821 }));
 		check_true(queue.try_write(Key{ "312" }, Value{ 9752 }));
-		check_false(queue.try_write(Key{ "592" }, Value{ 5823 }));
-		check_false(queue.try_write(Key{ "4124" }, Value{ 978736 }));
+		check_true(!queue.try_write(Key{ "592" }, Value{ 5823 }));
+		check_true(!queue.try_write(Key{ "4124" }, Value{ 978736 }));
 		check_true(queue.try_write(Key{ "312" }, Value{ 21 }));
 		check_reachable_true();
 	}

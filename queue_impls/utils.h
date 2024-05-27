@@ -1,12 +1,10 @@
 #pragma once
 #include <array>
-#include <atomic>
-#include <cassert>
 #include <map>
 #include <mutex>
 #include <queue>
 #include <stdexcept>
-#include <unistd.h>
+#include <thread>
 
 
 #define CONCAT__(a, b) a##b
@@ -56,7 +54,7 @@ namespace Utils
 	};
 	
 	template<typename T>
-	struct reverse_iteration_adaptor
+	struct ReverseIterationAdaptor
 	{
 		T &m_iterable;
 		
@@ -72,33 +70,18 @@ namespace Utils
 	
 	template<typename T>
 	[[nodiscard]] constexpr
-	reverse_iteration_adaptor<T> iter_reverse(T &iterable) {
-		return reverse_iteration_adaptor<T>{ iterable };
-	}
-	
-	
-	constexpr auto WAIT_TIME = chrono::milliseconds{ 1 };
-	
-	inline void sleep(chrono::milliseconds time) {
-		usleep(chrono::duration_cast<chrono::microseconds>(time).count());
-	}
-	
-	template<typename T, std::size_t N, typename F, std::size_t... I>
-	[[nodiscard]] constexpr
-	auto make_array__impl(F &&func, std::index_sequence<I...>) {
-		return std::array<T, N>{ {func(I)...} };
-	}
-	
-	template<typename T, size_t N, typename F>
-	[[nodiscard]] constexpr
-	std::array<T, N> make_array(F &&func) {
-		return make_array__impl<T>(std::forward<F>(func), std::make_index_sequence<N>{});
+	ReverseIterationAdaptor<T> iter_reverse(T &iterable) {
+		return ReverseIterationAdaptor<T>{ iterable };
 	}
 	
 	[[nodiscard]] constexpr
-	chrono::milliseconds to_milli(chrono::nanoseconds t) {
-		return chrono::duration_cast<chrono::milliseconds>(t);
+	chrono::milliseconds to_milli(const chrono::nanoseconds time) {
+		return chrono::duration_cast<chrono::milliseconds>(time);
 	};
+	
+	inline void sleep(const chrono::milliseconds time) {
+		std::this_thread::sleep_for(time);
+	}
 	
 	template<typename K, typename V>
 	[[nodiscard]] constexpr

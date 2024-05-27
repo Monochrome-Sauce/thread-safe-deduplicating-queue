@@ -101,7 +101,7 @@ public:
 			if (this->stopped()) {
 				throw Utils::queue_stopped_exception{};
 			}
-			Utils::sleep(Utils::WAIT_TIME);
+			Utils::sleep(WAIT_TIME);
 		}
 	}
 };

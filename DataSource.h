@@ -2,7 +2,6 @@
 #include <cassert>
 #include <random>
 #include <thread>
-#include <typeinfo>
 
 
 enum class DataSet {

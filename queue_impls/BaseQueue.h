@@ -1,6 +1,9 @@
 #pragma once
 #include "utils.h"
+#include <atomic>
 
+
+constexpr auto WAIT_TIME = chrono::milliseconds{ 1 };
 
 using isize = int32_t;
 using usize = std::make_unsigned_t<isize>;
