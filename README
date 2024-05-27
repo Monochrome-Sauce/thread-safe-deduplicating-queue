@@ -1,24 +1,34 @@
 This small project tests different implementations of a thread-safe queue that
   deduplicates based on the inserted key.
 
-Use `make run` to build and run the tests, which only require C++17.
+Run `make help` for build instructions.
 
 Notes:
 1. Short non-exhaustive descriptions of each implementation can be found next to
     the declaration of the type in its respective C++ header file.
 
-2. The `test()` function helps check if an implementation is minimally correct.
+2. The `test()` function helps in developing new implementations and is not an
+    exhaustive unit test.
+    Additional test cases are welcome.
 
 3. The `blackbox_benchmark()` function attempts to test the performance of an
     implementation without seeing its internals, which can result in inaccuracy.
+    Improved benchmarks are welcome.
 
 4. Sharded implementations rely on checking every shard for values when reading,
     which causes a significant slow down for read operations. Contrast this to
     the write operation which speeds up significantly, so we can conclude that a
     high shard count is good for high write speeds with slow read speeds.
 
-5. High CPU usage corresponds to parallel writes, and extremely high usage (90%+)
-    shows that contention is very low. You can use 'display-cpu-usage.py' to
-    view the CPU usage in a terminal.
+5. Configuring the tests can be done by alterting the code in 'main.cpp'.
 
-6. Test configuration can be done by alterting the code in `main()`.
+6. In my testing, `DataSet::RANDOM` resulted in the sharded implementations
+    reaching their capacity when using rvalue-references with `try_write()`,
+    but with other values for `DataSet` the rvalue-references cause the queue to
+    be faster than if const-lvalue-references were used.
+
+7. The '1 lock' implementations seem to be faster than the '2 lock'
+    implementations when deduplication happens less.
+
+8. Sharded implementations are faster unless duplication is high (e.g 90%).
+    Reads can become awfully slow with many shards.
