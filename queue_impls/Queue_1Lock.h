@@ -25,18 +25,18 @@ public:
 		return m_queue.size();
 	}
 	
-	bool try_write(const Key &key, const Value &value) {
+	bool try_write(Key &&key, Value &&value) {
 		DECL_LOCK_GUARD(m_lock);
 		if (m_queue.size() >= this->capacity()) { // try to dedup
 			auto iter = m_map.find(key);
 			if (iter == m_map.end()) {
 				return false;
 			}
-			iter->second = value;
+			iter->second = std::move(value);
+			return true;
 		}
-		else if (auto [iter, inserted] = m_map.insert_or_assign(key, value); inserted) {
-			m_queue.push(iter);
-		}
+		auto [iter, inserted] = m_map.insert_or_assign(std::move(key), std::move(value));
+		if (inserted) { m_queue.push(iter); }
 		return true;
 	}
 	
