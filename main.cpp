@@ -87,13 +87,13 @@ static void test() {
 
 template<typename Queue>
 static void blackbox_benchmark() {
+	constexpr DataSet DATA_SET =  DataSet::LINEAR_16BIT;
 	constexpr size_t N_CYCLES = (1 << 16);
 	constexpr size_t N_THREADS = 128;
 	Queue queue{ N_CYCLES };
 	
 	std::array<std::thread, N_THREADS> writers;
 	std::array<std::thread, N_THREADS> readers;
-	const chrono::time_point tpStart = chrono::system_clock::now();
 	
 	printf("Running %zu readers...\n", readers.size());
 	for (std::thread &thrd : readers) {
@@ -108,9 +108,11 @@ static void blackbox_benchmark() {
 	printf("Running %zu writers for %'zu cycles each (total cycles: %'zu)...\n",
 		writers.size(), N_CYCLES, writers.size() * N_CYCLES
 	);
+	std::atomic<bool> waitFlag = true;
 	for (std::thread &thrd : writers) {
-		thrd = std::thread([&queue]() {
-			DataSource<DataSet::LINEAR_16BIT> src;
+		thrd = std::thread([&queue, &waitFlag]() {
+			DataSource<DATA_SET> src;
+			while (waitFlag.load()) { Utils::sleep(chrono::milliseconds{ 1 }); }
 			for (size_t i = 0; i < N_CYCLES; ++i) {
 				auto [id, number] = src.get();
 				if (!queue.try_write(Key{ id }, Value{ number })) {
@@ -119,6 +121,9 @@ static void blackbox_benchmark() {
 			}
 		});
 	}
+	Utils::sleep(chrono::seconds{ 2 });
+	const chrono::time_point tpStart = chrono::system_clock::now();
+	waitFlag.store(false);
 	
 	
 	const chrono::time_point tpWaitWriters = chrono::system_clock::now();

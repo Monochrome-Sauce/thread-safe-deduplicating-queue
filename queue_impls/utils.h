@@ -55,6 +55,27 @@ namespace Utils
 		}
 	};
 	
+	template<typename T>
+	struct reverse_iteration_adaptor
+	{
+		T &m_iterable;
+		
+		[[nodiscard]] constexpr auto begin() { return m_iterable.rbegin(); }
+		[[nodiscard]] constexpr auto end() { return m_iterable.rend(); }
+		
+		[[nodiscard]] constexpr auto begin() const { return m_iterable.rbegin(); }
+		[[nodiscard]] constexpr auto end() const { return m_iterable.rend(); }
+		
+		[[nodiscard]] constexpr auto cbegin() const { return m_iterable.rbegin(); }
+		[[nodiscard]] constexpr auto cend() const { return m_iterable.rend(); }
+	};
+	
+	template<typename T>
+	[[nodiscard]] constexpr
+	reverse_iteration_adaptor<T> iter_reverse(T &iterable) {
+		return reverse_iteration_adaptor<T>{ iterable };
+	}
+	
 	
 	constexpr auto WAIT_TIME = chrono::milliseconds{ 1 };
 	
