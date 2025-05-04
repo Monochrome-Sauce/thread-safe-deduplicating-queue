@@ -3,6 +3,7 @@
 #include "queue_impls/Queue_1LockSharded.h"
 #include "queue_impls/Queue_2Lock.h"
 #include "queue_impls/Queue_2LockSharded.h"
+#include "queue_impls/Queue_SplitSharded.h"
 
 
 struct Key { std::string _; };
@@ -159,9 +160,11 @@ int main() {
 	RUN_TEST(Queue_1LockSharded<Key, Value, 16>);
 	RUN_TEST(Queue_2Lock<Key, Value>);
 	RUN_TEST(Queue_2LockSharded<Key, Value, 16>);
+	RUN_TEST(Queue_SplitSharded<Key, Value, 16>);
 	RUN_BLACKBOX_BENCHMARK(Queue_1Lock<Key, Value>);
 	RUN_BLACKBOX_BENCHMARK(Queue_1LockSharded<Key, Value, 16>);
 	RUN_BLACKBOX_BENCHMARK(Queue_2Lock<Key, Value>);
 	RUN_BLACKBOX_BENCHMARK(Queue_2LockSharded<Key, Value, 16>);
+	RUN_BLACKBOX_BENCHMARK(Queue_SplitSharded<Key, Value, 16>);
 	return 0;
 }
